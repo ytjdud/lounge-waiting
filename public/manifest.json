@@ -1,0 +1,34 @@
+{
+  "name": "라운지 웨이팅",
+  "short_name": "라운지 웨이팅",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "start_url": ".",
+  "display": "standalone",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "./AppImages/ios/512.png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./AppImages/ios/512.png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./AppImages/ios/512.png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "./AppImages/ios/192.png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./AppImages/ios/144.png",
+      "sizes": "144x144"
+    }
+  ]
+}

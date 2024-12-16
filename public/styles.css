@@ -1,0 +1,67 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #ffffff;
+  overflow: hidden;
+  font-family: 'Arial', sans-serif;
+}
+.content {
+  width: 90vw;
+}
+.title-queue, .title-call {
+  text-align: left;
+  font-size: 4vw;
+  margin-bottom: 2vw;
+  padding-left: 1.5vw;
+  font-weight: bold;
+  color: #191919;
+}
+.title-call {
+  margin-top: 5vw;
+}
+.button-queue-container, .button-call-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2vw; /* 버튼 간의 간격을 화면 너비에 따라 설정 */
+  width: 90vw;
+}
+.button-queue-container a, .button-call-container a  {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  background-color: #f0f0f0;
+  color: #AA8B4D          ;
+  font-size: 4.5vw;
+  font-weight: bold;
+  padding: 5vw 2vw;
+  border-radius: 3vw;
+  transition: background-color 0.3s;
+}
+
+/* 너비가 500px 이상일 때 반응형을 멈추고 고정 크기 적용 */
+@media (min-width: 500px) {
+  .content {
+    width: 450px;
+  }
+  .button-queue-container, .button-call-container {
+    width: 450px;
+    gap: 10px;
+  }
+  .button-queue-container a, .button-call-container a {
+    font-size: 22.5px;
+    padding: 25px 10px;
+    border-radius: 15px;
+  }
+  .title-queue, .title-call {
+    font-size: 20px;
+    padding-left: 7.5px;
+    margin-bottom: 10px;
+  }
+  .title-call {
+    margin-top: 25px;
+  }
+}
