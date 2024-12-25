@@ -74,6 +74,7 @@ body {
   flex: 1; /* 나머지 공간을 채우는 유연한 영역 */
   text-align: center;
   position: relative;
+  color: #AA8B4D;
 }
 
 .floor-status strong {
