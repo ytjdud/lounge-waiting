@@ -2,7 +2,7 @@ import { ContactNumbers, ExternalLinks } from './enum.js';
 
 const accessToken = "access-token";
 const endpoints = [
-  { id: "gangnam10F", url: "https://nowwaiting.co/web_api/v1/spots/14406/" },
+  { id: "gangnam10F", url: "https://nowwaiting.co/web_api/v1/spots/14406" },
   { id: "gangnam7F", url: "https://nowwaiting.co/web_api/v1/spots/15533" },
   { id: "upperHouse", url: "https://nowwaiting.co/web_api/v1/spots/18431" },
   { id: "myeongDong", url: "https://nowwaiting.co/web_api/v1/spots/15824" },
@@ -12,8 +12,9 @@ const endpoints = [
 
 async function fetchWaitingCount() {
   try {
-    for (const endpoint of endpoints) {
-      const response = await fetch(endpoint.url, {
+    // 모든 API 요청을 병렬로 실행
+    const promises = endpoints.map((endpoint) =>
+      fetch(endpoint.url, {
         method: "GET",
         headers: {
           "Access-Token": accessToken,
@@ -21,27 +22,43 @@ async function fetchWaitingCount() {
           "Accept": "application/json, text/plain, */*",
           "Accept-Encoding" : "gzip, deflate, br, zstd",
           "Connection": "keep-alive"
-        }
-      });
+        },
+      })
+        .then((response) => {
+          if(!response.ok) {
+            console.error(`Failed to fetch ${endpoint.url}:`, response.status);
+            return { id: endpoint.id, error: true };
+          }
+          return response.json().then((data) => ({
+            id: endpoint.id,
+            waitingCount: data.waiting_info?.queued_waitings_count,
+          }));
+        })
+        .catch((error) => {
+          console.error(`Error fetching ${endpoint.url}:`, error);
+          return { id: endpoint.id, error: true };
+        })
+    );
 
-      if (!response.ok) {
-        console.error(`Failed to fetch ${endpoint.url}:`, response.status);
-        document.getElementById(endpoint.id).textContent = "Error";
-        continue;
-      }
+    // 모든 요청이 완료되면 처리
+    const results = await Promise.all(promises);
 
-      const data = await response.json();
-      const waitingCount = data.waiting_info?.queued_waitings_count;
-
-      const displayText = waitingCount === 0 
+    // 데이터를 화면에 업데이트
+    results.forEach((result) => {
+      const element = document.getElementById(result.id);
+      if (results.error){
+        element.textContent = "Error";
+      } else {
+        const waitingCount = result.waitingCount;
+        const displayText = waitingCount === 0
         ? "<strong>바로입장</strong>"
-        : (waitingCount 
+        : ( waitingCount
           ? `대기 <strong>${waitingCount}팀</strong>`
-          : "N/A");
+          : "N/A" );
 
-      document.getElementById(endpoint.id).innerHTML = displayText;
-
-    }
+        element.innerHTML = displayText;
+      }
+    });
   } catch (error) {
     console.error("Error fetching waiting counts:", error);
   }
