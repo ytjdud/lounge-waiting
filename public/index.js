@@ -45,7 +45,7 @@ async function fetchWaitingCount() {
     const promises = Object.values(StoreInfos)
       .flatMap((store) => store.floors)
       .map((floor) =>
-        fetch(floor.url, {
+        fetch(floor.api, {
           method: "GET",
           headers: {
             "Access-Token": accessToken,
@@ -55,7 +55,7 @@ async function fetchWaitingCount() {
         })
           .then((response) => {
             if (!response.ok) {
-              console.error(`Failed to fetch ${floor.url}:`, response.status);
+              console.error(`Failed to fetch ${floor.api}:`, response.status);
               return { id: floor.id, error: true };
             }
             return response.json().then((data) => ({
@@ -64,7 +64,7 @@ async function fetchWaitingCount() {
             }));
           })
           .catch((error) => {
-            console.error(`Error fetching ${floor.url}:`, error);
+            console.error(`Error fetching ${floor.api}:`, error);
             return { id: floor.id, error: true };
           })
       );
@@ -94,21 +94,29 @@ async function fetchWaitingCount() {
   }
 }
 
+/**
+ * Floor Status를 누르면 실제 나우웨이팅 페이지로 이동한다.
+ * 
+ * @param {*} storeInfos 
+ */
+async function addClickEventToFloorStatus(storeInfos) {
+  for (const [key, store] of Object.entries(storeInfos)) {
+    store.floors.forEach((floor) => {
+      const floorStatusElement = document.getElementById(floor.id);
+      if (floorStatusElement) {
+        floorStatusElement.onclick = () => {
+          window.open(floor.url, "_blank"); // 새 탭에서 URL 열기
+        };
+      }
+    });
+  }
+}
+
 const contentContainer = document.querySelector(".content");
 generateStoreHTML(contentContainer, StoreInfos);
 
 document.addEventListener("DOMContentLoaded", () => {
-  // const buttonQueueContainer = document.getElementById("button-queue-container");
   // const buttonCallContainer = document.getElementById("button-call-container");
-
-  // Object.entries(ExternalLinks).forEach(([location, link]) => {
-  //   const button = document.createElement("a");
-  //   button.href = `${link}`;
-  //   button.target= `_blank`;
-  //   button.className = `button`;
-  //   button.textContent = location;
-  //   buttonQueueContainer.appendChild(button);
-  // })
 
   // Object.entries(ContactNumbers).forEach(([location, number]) => {
   //   const button = document.createElement("a");
@@ -118,9 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
   //   buttonCallContainer.appendChild(button);
   // });
   fetchWaitingCount();
+  addClickEventToFloorStatus(StoreInfos);
   
   // TODO: 라운지마다 전화번호 적용하기
-  const contact = document.addEventListener("click", () => {
-    window.location.href = "tel:02";
-  });
+  // const contact = document.addEventListener("click", () => {
+  //   window.location.href = "tel:02";
+  // });
 });
