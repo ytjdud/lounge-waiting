@@ -1,4 +1,4 @@
-import { ContactNumbers, StoreInfos } from './enum.js';
+import { StoreInfos } from './enum.js';
 
 const accessToken = "";
 
@@ -27,6 +27,7 @@ function generateStoreHTML(contentContainer, storeInfos) {
 
       const contactContainer = document.createElement("div");
       contactContainer.className = "contact";
+      contactContainer.id = `contact-${floor.id}`;
 
       floorContainer.appendChild(floorLabel);
       floorContainer.appendChild(floorStatus);
@@ -112,24 +113,30 @@ async function addClickEventToFloorStatus(storeInfos) {
   }
 }
 
+/**
+ * 전화기 버튼을 누르면 해당 라운지에 전화를 할 수 있다.
+ * 
+ * @param {*} storeInfos 
+ */
+async function addClickEventToContact(storeInfos) {
+  for (const [key, store] of Object.entries(storeInfos)) {
+    store.floors.forEach((floor) => {
+      const contactElement = document.getElementById(`contact-${floor.id}`);
+      if(contactElement) {
+        contactElement.onclick = () => {
+          window.location.href = `tel:${floor.contact}`;
+        };
+      }
+    });
+  }
+}
+
+
 const contentContainer = document.querySelector(".content");
 generateStoreHTML(contentContainer, StoreInfos);
 
 document.addEventListener("DOMContentLoaded", () => {
-  // const buttonCallContainer = document.getElementById("button-call-container");
-
-  // Object.entries(ContactNumbers).forEach(([location, number]) => {
-  //   const button = document.createElement("a");
-  //   button.href = `tel:${number}`;
-  //   button.className = `button`;
-  //   button.textContent = location;
-  //   buttonCallContainer.appendChild(button);
-  // });
   fetchWaitingCount();
   addClickEventToFloorStatus(StoreInfos);
-  
-  // TODO: 라운지마다 전화번호 적용하기
-  // const contact = document.addEventListener("click", () => {
-  //   window.location.href = "tel:02";
-  // });
+  addClickEventToContact(StoreInfos);
 });
