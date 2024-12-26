@@ -2,6 +2,8 @@ import { StoreInfos } from './enum.js';
 
 const accessToken = "";
 
+// TODO: 새로고침 버튼 추가하기
+
 function generateStoreHTML(contentContainer, storeInfos) {
   for (const [key, store] of Object.entries(storeInfos)) {
     const storeContainer = document.createElement("div");
@@ -42,7 +44,6 @@ function generateStoreHTML(contentContainer, storeInfos) {
 
 async function fetchWaitingCount() {
   try {
-    // 모든 API 요청을 병렬로 실행
     const promises = Object.values(StoreInfos)
       .flatMap((store) => store.floors)
       .map((floor) =>
@@ -70,17 +71,14 @@ async function fetchWaitingCount() {
           })
       );
 
-    // 모든 요청이 완료되면 처리
     const results = await Promise.all(promises);
 
-    // 데이터를 화면에 업데이트
     results.forEach((result) => {
       const element = document.getElementById(result.id);
       if (results.error){
         element.textContent = "Error";
       } else {
         const waitingCount = result.waitingCount;
-        // TODO: 시간 지나면 '영업 종료' 표시
         const displayText = waitingCount === 0
         ? "<strong>바로입장</strong>"
         : ( waitingCount
@@ -131,12 +129,85 @@ async function addClickEventToContact(storeInfos) {
   }
 }
 
+/**
+ * 현재 시간이 백화점 영업 시간 내인지 확인하는 함수
+ * 
+ * @returns boolean
+ */
+function isWithinAllowedTime() {
+  const now = new Date();
+  const koreaTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+  const currentHour = koreaTime.getHours();
+  const currentMinute = koreaTime.getMinutes();
+  const currentDay = koreaTime.getDay // 0(일요일) ~ 6(토요일)
+
+  // 월 ~ 목 영업시간 : 10:30 ~ 8:00
+  if (currentDay >= 1 && currentDay <= 4) {
+    if (
+      (currentHour > 10 || (currentHour === 10 && currentMinute >= 30)) 
+        && currentHour < 20
+    ) {
+      return true;
+    }
+    return false;
+  } 
+  
+  // 금 ~ 일 영업시간 : 10:30 ~ 8:30
+  else {
+    if (
+      (currentHour > 10 || (currentHour === 10 && currentMinute >= 30)) 
+        && (currentHour < 20 || (currentHour === 20 && currentMinute < 30))
+
+    ) {
+      return true;
+    }
+    return false;
+  }
+}
+
+/**
+ * 현재 시간을 확인해 주기적으로 대기 팀 수를 새로고침하거나 영업 종료를 표시하는 함수
+ * 
+ * @param {*} intervalTime 
+ * @param {*} apiCallFunction 
+ */
+function startIntervalWithTimeRestriction(intervalTime) {
+  if (isWithinAllowedTime()) {
+    fetchWaitingCount();
+  } else {
+    setClosedText(StoreInfos);
+  }
+
+  // setInterval을 설정하되, 조건 확인 후 API 호출
+  setInterval(() => {
+    if (isWithinAllowedTime()) {
+      fetchWaitingCount();
+    }
+  }, intervalTime);
+}
+
+/**
+ * 화면에 '영업 종료'를 표시하는 함수
+ * 
+ * @param {*} storeInfos 
+ */
+async function setClosedText(storeInfos) {
+  for (const [key, store] of Object.entries(storeInfos)) {
+    store.floors.forEach((floor) => {
+      const element = document.getElementById(floor.id);
+      element.innerHTML = "<strong>영업 종료</strong>";
+    });
+  }
+}
+
 
 const contentContainer = document.querySelector(".content");
 generateStoreHTML(contentContainer, StoreInfos);
 
 document.addEventListener("DOMContentLoaded", () => {
-  fetchWaitingCount();
   addClickEventToFloorStatus(StoreInfos);
   addClickEventToContact(StoreInfos);
+
+  const intervalTime = 1000 * 60 * 5 // 5분
+  startIntervalWithTimeRestriction(intervalTime);
 });
