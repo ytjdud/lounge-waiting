@@ -200,6 +200,34 @@ async function setClosedText(storeInfos) {
   }
 }
 
+/**
+ * 페이지 로드 시 특정 시간에 새로고침을 설정하는 함수
+ * 
+ * @param {*} hour 
+ * @param {*} minute 
+ * @param {*} second 
+ */
+function refreshAt(hour, minute, second) {
+  const now = new Date();
+  const target = new Date();
+
+  target.setHours(hour);
+  target.setMinutes(minute);
+  target.setSeconds(second);
+  target.setMilliseconds(0);
+
+  // 현재 시간이 이미 대상 시간을 지난 경우, 다음 날로 설정
+  if (now > target) {
+    target.setDate(target.getDate() + 1);
+  }
+
+  const timeout = target.getTime() - now.getTime();
+
+  setTimeout(() => {
+    location.reload();
+  }, timeout);
+}
+
 
 const contentContainer = document.querySelector(".content");
 generateStoreHTML(contentContainer, StoreInfos);
@@ -208,6 +236,8 @@ document.addEventListener("DOMContentLoaded", () => {
   addClickEventToFloorStatus(StoreInfos);
   addClickEventToContact(StoreInfos);
 
+  refreshAt(10, 30, 1);
+  
   const intervalTime = 1000 * 60 * 5 // 5분
   startIntervalWithTimeRestriction(intervalTime);
 });
