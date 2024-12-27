@@ -65,12 +65,32 @@ body {
 }
 
 .contact {
-  width: 5.5vw;
+  width: 4.5vw;
   height: 5.5vw;
   background-size: contain;
   background-repeat: no-repeat;
-  background-image: url('icon/call.png'); /* 전화기 아이콘 이미지 경로 */
+  background-image: url('icon/call.png');
   filter: invert(6%) sepia(31%) saturate(0%) hue-rotate(12deg) brightness(99%) contrast(93%);
+}
+
+.reload {
+  width: 5.5vw;
+  height: 5.5vw;
+  float: right;
+  margin-bottom: 2vw;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-image: url('icon/reload.png');
+  filter: invert(96%) sepia(9%) saturate(534%) hue-rotate(341deg) brightness(91%) contrast(98%);
+}
+
+.rotating {
+  animation: rotate-right 0.5s linear;
+	transform-origin: 50% 50%;
+}
+
+.list-container {
+  clear: both
 }
 
 /* 너비가 500px 이상일 때 반응형을 멈추고 고정 크기 적용 */
@@ -101,7 +121,19 @@ body {
   }
 
   .contact {
-    width: 27.5px;
+    width: 22.5px;
     height: 27.5px;
   }
+
+  .reload {
+    width: 27.5px;
+    height: 27.5px;
+    margin-bottom: 10px;
+  }
+}
+
+@keyframes rotate-right {
+	to {
+		transform: rotate(360deg);
+	}
 }

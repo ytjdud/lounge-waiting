@@ -2,6 +2,10 @@ import { StoreInfos } from './enum.js';
 
 const accessToken = "";
 
+const reloadId = "reload";
+const rotateAnimationClassName = "rotating";
+const intervalTime = 1000 * 60 * 5; // 5분
+
 // TODO: 새로고침 버튼 추가하기
 
 function generateStoreHTML(contentContainer, storeInfos) {
@@ -130,6 +134,25 @@ async function addClickEventToContact(storeInfos) {
 }
 
 /**
+ * 새로고침 버튼을 누르면 대기 인원이 새로고침된다.
+ * TODO: API 재호출 로직 추가
+ * 
+ * @param {*} reloadId 
+ * @param {*} rotateAnimationClassName 
+ */
+async function addClickEventToReload(reloadId, rotateAnimationClassName){
+  const reloadElement = document.getElementById(reloadId);
+
+  reloadElement.addEventListener('click', () => {
+    reloadElement.classList.add(rotateAnimationClassName);
+
+    setTimeout(() => {
+      reloadElement.classList.remove(rotateAnimationClassName);
+    }, 1000*0.5); // 0.5초
+  });
+}
+
+/**
  * 현재 시간이 백화점 영업 시간 내인지 확인하는 함수
  * 
  * @returns boolean
@@ -228,16 +251,15 @@ function refreshAt(hour, minute, second) {
   }, timeout);
 }
 
-
-const contentContainer = document.querySelector(".content");
-generateStoreHTML(contentContainer, StoreInfos);
+const listContainer = document.querySelector(".list-container");
+generateStoreHTML(listContainer, StoreInfos);
 
 document.addEventListener("DOMContentLoaded", () => {
   addClickEventToFloorStatus(StoreInfos);
   addClickEventToContact(StoreInfos);
+  addClickEventToReload(reloadId, rotateAnimationClassName)
 
   refreshAt(10, 30, 1);
-  
-  const intervalTime = 1000 * 60 * 5 // 5분
+
   startIntervalWithTimeRestriction(intervalTime);
 });
