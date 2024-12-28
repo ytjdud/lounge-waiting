@@ -247,7 +247,7 @@ function refreshAt(hour, minute, second) {
   const timeout = target.getTime() - now.getTime();
 
   setTimeout(() => {
-    location.reload();
+    fetchAllWaitingCounts();
   }, timeout);
 }
 
