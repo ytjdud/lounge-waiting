@@ -6,7 +6,6 @@ const reloadId = "reload";
 const rotateAnimationClassName = "rotating";
 const intervalTime = 1000 * 60 * 5; // 5분
 
-// TODO: 새로고침 버튼 추가하기
 
 function generateStoreHTML(contentContainer, storeInfos) {
   for (const [key, store] of Object.entries(storeInfos)) {
@@ -46,7 +45,7 @@ function generateStoreHTML(contentContainer, storeInfos) {
   }
 }
 
-async function fetchWaitingCount() {
+async function fetchAllWaitingCounts() {
   try {
     const promises = Object.values(StoreInfos)
       .flatMap((store) => store.floors)
@@ -135,7 +134,6 @@ async function addClickEventToContact(storeInfos) {
 
 /**
  * 새로고침 버튼을 누르면 대기 인원이 새로고침된다.
- * TODO: API 재호출 로직 추가
  * 
  * @param {*} reloadId 
  * @param {*} rotateAnimationClassName 
@@ -149,6 +147,8 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName){
     setTimeout(() => {
       reloadElement.classList.remove(rotateAnimationClassName);
     }, 1000*0.5); // 0.5초
+
+    fetchAllWaitingCounts();
   });
 }
 
@@ -196,7 +196,7 @@ function isWithinAllowedTime() {
  */
 function startIntervalWithTimeRestriction(intervalTime) {
   if (isWithinAllowedTime()) {
-    fetchWaitingCount();
+    fetchAllWaitingCounts();
   } else {
     setClosedText(StoreInfos);
   }
@@ -204,7 +204,7 @@ function startIntervalWithTimeRestriction(intervalTime) {
   // setInterval을 설정하되, 조건 확인 후 API 호출
   setInterval(() => {
     if (isWithinAllowedTime()) {
-      fetchWaitingCount();
+      fetchAllWaitingCounts();
     }
   }, intervalTime);
 }
