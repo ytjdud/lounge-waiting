@@ -162,7 +162,7 @@ function isWithinAllowedTime() {
   const koreaTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
   const currentHour = koreaTime.getHours();
   const currentMinute = koreaTime.getMinutes();
-  const currentDay = koreaTime.getDay // 0(일요일) ~ 6(토요일)
+  const currentDay = koreaTime.getDay() // 0(일요일) ~ 6(토요일)
 
   // 월 ~ 목 영업시간 : 10:30 ~ 8:00
   if (currentDay >= 1 && currentDay <= 4) {
