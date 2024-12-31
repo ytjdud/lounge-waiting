@@ -148,7 +148,11 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName){
       reloadElement.classList.remove(rotateAnimationClassName);
     }, 1000*0.5); // 0.5초
 
-    fetchAllWaitingCounts();
+    if (isWithinAllowedTime()){
+      fetchAllWaitingCounts();
+    } else {
+      setClosedText(StoreInfos);
+    }
   });
 }
 
