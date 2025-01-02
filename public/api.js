@@ -6,6 +6,7 @@ const rotateAnimationClassName = "rotating";
 const intervalTime = 1000 * 60 * 5; // 5분
 const stores = Object.values(StoreInfos);
 
+// TODO: 내 대기 상태 불러오기
 
 async function fetchAllWaitingCounts() {
   try {
@@ -73,12 +74,24 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName){
       reloadElement.classList.remove(rotateAnimationClassName);
     }, 1000*0.5); // 0.5초
 
-    if (isWithinAllowedTime()){
-      fetchAllWaitingCounts();
-    } else {
-      setClosedText(stores);
-    }
+    handleStoreStatus();
   });
+}
+
+/**
+ * 영업 시간 내인 경우, API를 호출하고 true를 반환한다.
+ * 영업 시간 외인 경우, API를 호출하지 않고 영업 종료 텍스트를 작성한 후 false를 반환한다.
+ * 
+ * @returns boolean
+ */
+function handleStoreStatus() {
+  if (isWithinAllowedTime()) {
+    fetchAllWaitingCounts();
+  } else {
+    setClosedText(stores);
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -118,24 +131,21 @@ function isWithinAllowedTime() {
 }
 
 /**
- * 현재 시간을 확인해 주기적으로 대기 팀 수를 새로고침하거나 영업 종료를 표시하는 함수
+ * API를 주기적으로 호출하도록 인터벌을 설정하는 함수
  * 
  * @param {*} intervalTime 
- * @param {*} apiCallFunction 
  */
-function startIntervalWithTimeRestriction(intervalTime) {
-  if (isWithinAllowedTime()) {
-    fetchAllWaitingCounts();
-  } else {
-    setClosedText(stores);
+function handleInterval(intervalTime) {
+  const isWithinAllowedTime = handleStoreStatus();
+
+  // 초기 상태 처리
+  if (!isWithinAllowedTime) {
+    return; // 초기 상태에서 영업 종료인 경우, 인터벌 설정하지 않음
   }
 
-  // setInterval을 설정하되, 조건 확인 후 API 호출
   const intervalId = setInterval(() => {
-    if (isWithinAllowedTime()) {
-      fetchAllWaitingCounts();
-    } else {
-      clearInterval(intervalId);
+    if (!isWithinAllowedTime) {
+      clearInterval(intervalId); // 영업 종료 시 인터벌 중지
     }
   }, intervalTime);
 }
@@ -183,6 +193,6 @@ function refreshAt(hour, minute, second) {
 }
 
 
+handleInterval(intervalTime);
 addClickEventToReload(reloadId, rotateAnimationClassName)
 refreshAt(10, 30, 1);
-startIntervalWithTimeRestriction(intervalTime);
