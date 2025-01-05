@@ -1,40 +1,97 @@
 import { StoreInfos } from './enum.js';
 
-const accessToken = "";
+const defaultAccessToken = "";
+const shAccessToken = "";
+const syAccessToken = "";
+
+const selectId = "select"
 const reloadId = "reload";
 const rotateAnimationClassName = "rotating";
+
 const intervalTime = 1000 * 60 * 5; // 5분
 const stores = Object.values(StoreInfos);
 
-// TODO: 내 대기 상태 불러오기
+/**
+ * 선택한 옵션에 따라 API 반환 값이 달라진다.
+ * 기본(id: default): 전체 대기 인원을 표시
+ * 개인(id: <이름>): 웨이팅을 걸어둔 곳이 있는 경우, 대기 순번을 표시
+ */
+async function selectOption(selectId) {
+  let selectedValue = document.getElementById(selectId).value;
 
-async function fetchAllWaitingCounts() {
+  document.getElementById(selectId).addEventListener("change", function () {
+    selectedValue = this.value;
+    checkValue(selectedValue)
+  });
+
+  checkValue(selectedValue)
+}
+
+/**
+ * 옵션 값에 따라 API 호출에 전달하는 access token 값이 다르다.
+ * 
+ * @param {*} value 
+ */
+function checkValue(value) {
+  if (value === "default") {
+    handleInterval(intervalTime, defaultAccessToken);
+  } else if (value === "sunny") {
+    handleInterval(intervalTime, shAccessToken);
+  } else if (value === "lauren") {
+    console.log(syAccessToken);
+    handleInterval(intervalTime, syAccessToken);
+  } else {
+    console.log("error with: " + value);
+  }
+}
+
+async function fetchAllWaitingCounts(accessToken) {
   try {
     const promises = stores.flatMap((store) => store.floors)
-      .map((floor) =>
-        fetch(floor.api, {
+      .map(async (floor) => {
+        const myWaitingResponse = await fetch(`${floor.api}/waitings`, {
           method: "GET",
           headers: {
             "Access-Token": accessToken,
             "Content-Type": "application/json",
             "Accept": "application/json, text/plain, */*",
           },
-        })
-          .then((response) => {
-            if (!response.ok) {
-              console.error(`Failed to fetch ${floor.api}:`, response.status);
-              return { id: floor.id, error: true };
-            }
-            return response.json().then((data) => ({
-              id: floor.id,
-              waitingCount: data.waiting_info?.queued_waitings_count,
-            }));
-          })
-          .catch((error) => {
-            console.error(`Error fetching ${floor.api}:`, error);
+        });
+
+        if (!myWaitingResponse.ok){
+          console.log(`Failed to fetch ${floor.api}/waitings: `, myWaitingResponse.status);
+          return {id: floor.id, error: true};
+        }
+
+        const myWaitingData = await myWaitingResponse.json();
+
+        if(Array.isArray(myWaitingData) && myWaitingData.length === 0){
+          const defaultWaitingReponse = await fetch(floor.api, {
+            method: "GET",
+            headers: {
+              "Access-Token": accessToken,
+              "Content-Type": "application/json",
+              "Accept": "application/json, text/plain, */*",
+            },
+          });
+
+          if (!defaultWaitingReponse.ok) {
+            console.error(`Failed to fetch ${floor.api}:`, response.status);
             return { id: floor.id, error: true };
-          })
-      );
+          }
+
+          const data = await defaultWaitingReponse.json();
+          return {
+            id: floor.id,
+            waitingCount: data.waiting_info?.queued_waitings_count,
+          };
+        } else {
+          return {
+            id: floor.id,
+            waitingCount: myWaitingData[0]?.remaining_waitings_count ?? "N/A",
+          };
+        }
+      });
 
     const results = await Promise.all(promises);
 
@@ -74,7 +131,8 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName){
       reloadElement.classList.remove(rotateAnimationClassName);
     }, 1000*0.5); // 0.5초
 
-    handleStoreStatus();
+    const selectedValue = document.getElementById(selectId).value;
+    checkValue(selectedValue)
   });
 }
 
@@ -84,9 +142,9 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName){
  * 
  * @returns boolean
  */
-function handleStoreStatus() {
+function handleStoreStatus(accessToken) {
   if (isWithinAllowedTime()) {
-    fetchAllWaitingCounts();
+    fetchAllWaitingCounts(accessToken);
   } else {
     setClosedText(stores);
     return false;
@@ -122,7 +180,6 @@ function isWithinAllowedTime() {
     if (
       (currentHour > 10 || (currentHour === 10 && currentMinute >= 30)) 
         && (currentHour < 20 || (currentHour === 20 && currentMinute < 30))
-
     ) {
       return true;
     }
@@ -135,8 +192,8 @@ function isWithinAllowedTime() {
  * 
  * @param {*} intervalTime 
  */
-function handleInterval(intervalTime) {
-  const isWithinAllowedTime = handleStoreStatus();
+function handleInterval(intervalTime, accessToken) {
+  const isWithinAllowedTime = handleStoreStatus(accessToken);
 
   // 초기 상태 처리
   if (!isWithinAllowedTime) {
@@ -188,11 +245,13 @@ function refreshAt(hour, minute, second) {
   const timeout = target.getTime() - now.getTime();
 
   setTimeout(() => {
-    fetchAllWaitingCounts();
+    fetchAllWaitingCounts(defaultAccessToken);
+    fetchAllWaitingCounts(shAccessToken);
+    fetchAllWaitingCounts(syAccessToken);
   }, timeout);
 }
 
 
-handleInterval(intervalTime);
+selectOption(selectId);
 addClickEventToReload(reloadId, rotateAnimationClassName)
 refreshAt(10, 30, 1);
