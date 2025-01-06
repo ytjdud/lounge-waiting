@@ -1,22 +1,19 @@
-import { StoreInfos } from './enum.js';
-
-const defaultAccessToken = "";
-const shAccessToken = "";
-const syAccessToken = "";
-
-const selectId = "select"
-const reloadId = "reload";
-const rotateAnimationClassName = "rotating";
+import { STORE_INFO, ACCESS_TOKEN, 
+  HTML_ID, HTML_CLASS_NAME_ROTATE_ANIMATION } from './enum.js';
+import { FloorStatusApi } from './api/FloorStatusApi.js'
 
 const intervalTime = 1000 * 60 * 5; // 5분
-const stores = Object.values(StoreInfos);
+const stores = Object.values(STORE_INFO);
+
+const floorStatusApi = new FloorStatusApi();
 
 /**
  * 선택한 옵션에 따라 API 반환 값이 달라진다.
  * 기본(id: default): 전체 대기 인원을 표시
  * 개인(id: <이름>): 웨이팅을 걸어둔 곳이 있는 경우, 대기 순번을 표시
+ * 
  */
-async function selectOption(selectId) {
+async function getFloorStatusBySelectOption(selectId) {
   let selectedValue = document.getElementById(selectId).value;
 
   document.getElementById(selectId).addEventListener("change", function () {
@@ -33,30 +30,56 @@ async function selectOption(selectId) {
  * @param {*} value 
  */
 function checkValue(value) {
-  if (value === "default") {
-    handleInterval(intervalTime, defaultAccessToken);
-  } else if (value === "sunny") {
-    handleInterval(intervalTime, shAccessToken);
-  } else if (value === "lauren") {
-    console.log(syAccessToken);
-    handleInterval(intervalTime, syAccessToken);
+  const token = ACCESS_TOKEN[value];
+
+  if (token) {
+    handleInterval(intervalTime, token);
   } else {
-    console.log("error with: " + value);
+    console.log(`Error with: ${value}`);
   }
+}
+
+/**
+ * API를 주기적으로 호출하도록 인터벌을 설정하는 함수
+ * 
+ * @param {*} intervalTime 
+ */
+function handleInterval(intervalTime, accessToken) {
+  const isOpen = handleStoreStatus(accessToken);
+
+  // 초기 상태 처리
+  if (!isOpen) {
+    return; // 초기 상태에서 영업 종료인 경우, 인터벌 설정하지 않음
+  }
+
+  const intervalId = setInterval(() => {
+    if (!isOpen) {
+      clearInterval(intervalId); // 영업 종료 시 인터벌 중지
+    }
+  }, intervalTime);
+}
+
+/**
+ * 영업 시간 내인 경우, API를 호출하고 true를 반환한다.
+ * 영업 시간 외인 경우, API를 호출하지 않고 영업 종료 텍스트를 작성한 후 false를 반환한다.
+ * 
+ * @returns boolean
+ */
+function handleStoreStatus(accessToken) {
+  if (isEveryStoreOpen()) {
+    fetchAllWaitingCounts(accessToken);
+  } else {
+    setClosedText(stores);
+    return false;
+  }
+  return true;
 }
 
 async function fetchAllWaitingCounts(accessToken) {
   try {
     const promises = stores.flatMap((store) => store.floors)
       .map(async (floor) => {
-        const myWaitingResponse = await fetch(`${floor.api}/waitings`, {
-          method: "GET",
-          headers: {
-            "Access-Token": accessToken,
-            "Content-Type": "application/json",
-            "Accept": "application/json, text/plain, */*",
-          },
-        });
+        const myWaitingResponse = await floorStatusApi.myWaitingRequest(floor, accessToken);
 
         if (!myWaitingResponse.ok){
           console.log(`Failed to fetch ${floor.api}/waitings: `, myWaitingResponse.status);
@@ -66,14 +89,7 @@ async function fetchAllWaitingCounts(accessToken) {
         const myWaitingData = await myWaitingResponse.json();
 
         if(Array.isArray(myWaitingData) && myWaitingData.length === 0){
-          const defaultWaitingReponse = await fetch(floor.api, {
-            method: "GET",
-            headers: {
-              "Access-Token": accessToken,
-              "Content-Type": "application/json",
-              "Accept": "application/json, text/plain, */*",
-            },
-          });
+          const defaultWaitingReponse = await floorStatusApi.defaultWaitingRequest(floor, accessToken);
 
           if (!defaultWaitingReponse.ok) {
             console.error(`Failed to fetch ${floor.api}:`, response.status);
@@ -116,12 +132,12 @@ async function fetchAllWaitingCounts(accessToken) {
 }
 
 /**
- * 새로고침 버튼을 누르면 대기 인원이 새로고침된다.
+ * 새로고침 버튼을 누르면 대기 인원이 새로고침된다. (완료)
  * 
  * @param {*} reloadId 
  * @param {*} rotateAnimationClassName 
  */
-async function addClickEventToReload(reloadId, rotateAnimationClassName){
+async function addClickEventToReload(reloadId, rotateAnimationClassName) {
   const reloadElement = document.getElementById(reloadId);
 
   reloadElement.addEventListener('click', () => {
@@ -131,25 +147,9 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName){
       reloadElement.classList.remove(rotateAnimationClassName);
     }, 1000*0.5); // 0.5초
 
-    const selectedValue = document.getElementById(selectId).value;
+    const selectedValue = document.getElementById(HTML_ID.select).value;
     checkValue(selectedValue)
   });
-}
-
-/**
- * 영업 시간 내인 경우, API를 호출하고 true를 반환한다.
- * 영업 시간 외인 경우, API를 호출하지 않고 영업 종료 텍스트를 작성한 후 false를 반환한다.
- * 
- * @returns boolean
- */
-function handleStoreStatus(accessToken) {
-  if (isWithinAllowedTime()) {
-    fetchAllWaitingCounts(accessToken);
-  } else {
-    setClosedText(stores);
-    return false;
-  }
-  return true;
 }
 
 /**
@@ -157,7 +157,7 @@ function handleStoreStatus(accessToken) {
  * 
  * @returns boolean
  */
-function isWithinAllowedTime() {
+function isEveryStoreOpen() {
   const now = new Date();
   const koreaTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
   const currentHour = koreaTime.getHours();
@@ -185,26 +185,6 @@ function isWithinAllowedTime() {
     }
     return false;
   }
-}
-
-/**
- * API를 주기적으로 호출하도록 인터벌을 설정하는 함수
- * 
- * @param {*} intervalTime 
- */
-function handleInterval(intervalTime, accessToken) {
-  const isWithinAllowedTime = handleStoreStatus(accessToken);
-
-  // 초기 상태 처리
-  if (!isWithinAllowedTime) {
-    return; // 초기 상태에서 영업 종료인 경우, 인터벌 설정하지 않음
-  }
-
-  const intervalId = setInterval(() => {
-    if (!isWithinAllowedTime) {
-      clearInterval(intervalId); // 영업 종료 시 인터벌 중지
-    }
-  }, intervalTime);
 }
 
 /**
@@ -245,13 +225,13 @@ function refreshAt(hour, minute, second) {
   const timeout = target.getTime() - now.getTime();
 
   setTimeout(() => {
-    fetchAllWaitingCounts(defaultAccessToken);
-    fetchAllWaitingCounts(shAccessToken);
-    fetchAllWaitingCounts(syAccessToken);
+    fetchAllWaitingCounts(ACCESS_TOKEN.default);
+    fetchAllWaitingCounts(ACCESS_TOKEN.sunny);
+    fetchAllWaitingCounts(ACCESS_TOKEN.lauren);
   }, timeout);
 }
 
 
-selectOption(selectId);
-addClickEventToReload(reloadId, rotateAnimationClassName)
+getFloorStatusBySelectOption(HTML_ID.select);
+addClickEventToReload(HTML_ID.reload, HTML_CLASS_NAME_ROTATE_ANIMATION)
 refreshAt(10, 30, 1);

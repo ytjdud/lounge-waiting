@@ -1,5 +1,18 @@
-export const StoreInfos = {
-  GANGNAM: {
+export const ACCESS_TOKEN = {
+  default : '',
+  sunny : '',
+  lauren : ''
+};
+
+export const HTML_ID = {
+  select : 'select',
+  reload : 'reload',
+};
+
+export const HTML_CLASS_NAME_ROTATE_ANIMATION = 'rotating';
+
+export const STORE_INFO = {
+  gangnam: {
     name: "강남점",
     floors: [
       { label: "10층", id: "gangnam10F", contact: "02-3479-1021",
@@ -13,19 +26,19 @@ export const StoreInfos = {
         url: "https://store.nowwaiting.co/spots/18431" },
     ],
   },
-  MYEONGDONG: {
+  myeongdong: {
     name: "본점",
     floors: [{ label: "13층", id: "myeongDong", contact: "02-310-1020",
       api: "https://nowwaiting.co/web_api/v1/spots/15824",
       url: "https://store.nowwaiting.co/spots/15824" }],
   },
-  TIMESQUARE: {
+  timesquare: {
     name: "타임스퀘어",
     floors: [{ label: "10층", id: "timeSquare", contact: "02-2639-1060",
       api: "https://nowwaiting.co/web_api/v1/spots/16982",
       url: "https://store.nowwaiting.co/spots/16982" }],
   },
-  SOUTHCITY: {
+  southcity: {
     name: "사우스시티",
     floors: [{ label: "2층", id: "southCity", contact: "031-695-1232",
       api: "https://nowwaiting.co/web_api/v1/spots/18136",

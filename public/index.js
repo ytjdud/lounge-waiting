@@ -1,6 +1,6 @@
-import { StoreInfos } from './enum.js';
+import { STORE_INFO } from './enum.js';
 
-const stores = Object.values(StoreInfos);
+const stores = Object.values(STORE_INFO);
 
 
 function generateStoreHTML(stores) {
