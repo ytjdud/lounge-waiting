@@ -12,16 +12,17 @@ const floorStatusApi = new FloorStatusApi();
  * 기본(id: default): 전체 대기 인원을 표시
  * 개인(id: <이름>): 웨이팅을 걸어둔 곳이 있는 경우, 대기 순번을 표시
  * 
+ * @param {*} selectId 
  */
 async function getFloorStatusBySelectOption(selectId) {
   let selectedValue = document.getElementById(selectId).value;
 
   document.getElementById(selectId).addEventListener("change", function () {
     selectedValue = this.value;
-    checkValue(selectedValue)
+    checkValue(selectedValue);
   });
 
-  checkValue(selectedValue)
+  checkValue(selectedValue);
 }
 
 /**
@@ -31,7 +32,6 @@ async function getFloorStatusBySelectOption(selectId) {
  */
 function checkValue(value) {
   const token = ACCESS_TOKEN[value];
-
   if (token) {
     handleInterval(intervalTime, token);
   } else {
@@ -45,34 +45,26 @@ function checkValue(value) {
  * @param {*} intervalTime 
  */
 function handleInterval(intervalTime, accessToken) {
-  const isOpen = handleStoreStatus(accessToken);
-
-  // 초기 상태 처리
-  if (!isOpen) {
-    return; // 초기 상태에서 영업 종료인 경우, 인터벌 설정하지 않음
-  }
+  fetchAllWaitingCounts(accessToken);
 
   const intervalId = setInterval(() => {
-    if (!isOpen) {
+    if (!isEveryStoreOpen()) {
       clearInterval(intervalId); // 영업 종료 시 인터벌 중지
     }
+    fetchAllWaitingCounts(accessToken);
   }, intervalTime);
 }
 
 /**
  * 영업 시간 내인 경우, API를 호출하고 true를 반환한다.
  * 영업 시간 외인 경우, API를 호출하지 않고 영업 종료 텍스트를 작성한 후 false를 반환한다.
- * 
- * @returns boolean
  */
-function handleStoreStatus(accessToken) {
+function handleStoreStatus() {
   if (isEveryStoreOpen()) {
-    fetchAllWaitingCounts(accessToken);
+    getFloorStatusBySelectOption(HTML_ID.select);
   } else {
     setClosedText(stores);
-    return false;
   }
-  return true;
 }
 
 async function fetchAllWaitingCounts(accessToken) {
@@ -148,7 +140,7 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName) {
     }, 1000*0.5); // 0.5초
 
     const selectedValue = document.getElementById(HTML_ID.select).value;
-    checkValue(selectedValue)
+    checkValue(selectedValue);
   });
 }
 
@@ -225,13 +217,13 @@ function refreshAt(hour, minute, second) {
   const timeout = target.getTime() - now.getTime();
 
   setTimeout(() => {
-    fetchAllWaitingCounts(ACCESS_TOKEN.default);
-    fetchAllWaitingCounts(ACCESS_TOKEN.sunny);
-    fetchAllWaitingCounts(ACCESS_TOKEN.lauren);
+    ACCESS_TOKEN.forEach((token) => {
+      fetchAllWaitingCounts(token);
+    });
   }, timeout);
 }
 
 
-getFloorStatusBySelectOption(HTML_ID.select);
+handleStoreStatus();
 addClickEventToReload(HTML_ID.reload, HTML_CLASS_NAME_ROTATE_ANIMATION)
 refreshAt(10, 30, 1);
