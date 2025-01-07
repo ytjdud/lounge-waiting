@@ -1,6 +1,7 @@
 import { STORE_INFO, ACCESS_TOKEN, 
   HTML_ID, HTML_CLASS_NAME_ROTATE_ANIMATION } from './enum.js';
-import { FloorStatusApi } from './api/FloorStatusApi.js'
+import { FloorStatusApi } from './api/FloorStatusApi.js';
+import { createResult } from './fetchResultTemplate.js';
 
 const intervalTime = 1000 * 60 * 5; // 5분
 const stores = Object.values(STORE_INFO);
@@ -33,9 +34,9 @@ async function getFloorStatusBySelectOption(selectId) {
 function checkValue(value) {
   const token = ACCESS_TOKEN[value];
   if (token) {
-    handleInterval(intervalTime, token);
+    handleInterval(intervalTime, value, token);
   } else {
-    console.log(`Error with: ${value}`);
+    console.log(`${value}의 토큰에 문제 발생. token: ${token}`);
   }
 }
 
@@ -44,8 +45,8 @@ function checkValue(value) {
  * 
  * @param {*} intervalTime 
  */
-function handleInterval(intervalTime, accessToken) {
-  fetchAllWaitingCounts(accessToken);
+function handleInterval(intervalTime, value, accessToken) {
+  fetchAllWaitingCounts(value, accessToken);
 
   const intervalId = setInterval(() => {
     if (!isEveryStoreOpen()) {
@@ -67,78 +68,95 @@ function handleStoreStatus() {
   }
 }
 
-async function fetchAllWaitingCounts(accessToken) {
+async function fetchAllWaitingCounts(value, accessToken) {
   try {
     const promises = stores.flatMap((store) => store.floors)
-      .map(async (floor) => {
-        const myWaitingResponse = await floorStatusApi.myWaitingRequest(floor, accessToken);
-
-        if (!myWaitingResponse.ok){
-          console.log(`Failed to fetch ${floor.api}/waitings: `, myWaitingResponse.status);
-          return {id: floor.id, error: true};
-        }
-
-        const myWaitingData = await myWaitingResponse.json();
-
-        if(Array.isArray(myWaitingData) && myWaitingData.length === 0){
-          const defaultWaitingReponse = await floorStatusApi.defaultWaitingRequest(floor, accessToken);
-
-          if (!defaultWaitingReponse.ok) {
-            console.error(`Failed to fetch ${floor.api}:`, response.status);
-            return { id: floor.id, error: true };
-          }
-
-          const data = await defaultWaitingReponse.json();
-          return {
-            id: floor.id,
-            waitingCount: data.waiting_info?.queued_waitings_count,
-            myWaiting: false,
-          };
-        } else {
-          return {
-            id: floor.id,
-            waitingCount: myWaitingData[0]?.remaining_waitings_count ?? "N/A",
-            myWaiting: true,
-          };
-        }
-      });
+    .map((floor) => {
+      if (value === 'default') {
+        return fetchDefaultWaiting(floor, accessToken);
+      }
+      const myWaiting = fetchMyWaiting(floor, accessToken);
+      return myWaiting.hasMyWaiting ? myWaiting : fetchDefaultWaiting(floor, accessToken);
+    });
 
     const results = await Promise.all(promises);
-
-    results.forEach((result) => {
-      const element = document.getElementById(result.id);
-      if (results.error){
-        element.textContent = "Error";
-      } else {
-        const waitingCount = result.waitingCount;
-        let displayText;
-        if (result.myWaiting){
-          if (waitingCount === -1) {
-            displayText = "<strong>지금 입장</strong>"; // TODO: 실제 API 응답 확인 필요
-          } else if (waitingCount === 0) {
-            displayText = "<strong>다음 입장</strong>";
-          } else if (waitingCount >= 1) {
-            displayText = `대기 <strong>${waitingCount+1}번째</strong>`;
-          } else {
-            displayText = "N/A";
-          }
-          
-          element.classList.remove('floor-status');
-          element.classList.add('my-floor-status');
-        } else {
-          displayText = waitingCount === 0
-          ? "<strong>바로 입장</strong>"
-          : ( waitingCount
-            ? `대기 <strong>${waitingCount}팀</strong>`
-            : "N/A" );
-        }
-
-        element.innerHTML = displayText;
-      }
-    });
+    results.forEach(updateWaitingDisplay);
   } catch (error) {
     console.error("Error fetching waiting counts:", error);
   }
+}
+
+async function fetchDefaultWaiting(floor, accessToken) {
+  const result = createResult(floor.id);
+
+  try {
+    const defaultWaitingResponse = await floorStatusApi.defaultWaitingRequest(floor, accessToken);
+    if (!defaultWaitingResponse.ok) {
+      console.error(`Failed to fetch ${floor.api}: ${defaultWaitingResponse.status}`);
+      return { ...result, error: true };
+    }
+
+    const data = await defaultWaitingResponse.json();
+    return { ...result, waitingCount: data.waiting_info?.queued_waitings_count };
+  } catch (error) {
+    console.error(`Error fetching default waiting for floor ${floor.id}:`, error);
+    return { ...result, error: true };
+  }
+}
+
+async function fetchMyWaiting(floor, accessToken) {
+  const result = createResult(floor.id);
+  
+  try {
+    const myWaitingResponse = await floorStatusApi.myWaitingRequest(floor, accessToken);
+    if (!myWaitingResponse.ok) {
+      console.log(`Failed to fetch ${floor.api}/waitings: ${myWaitingResponse.status}`);
+      return { ...result, error: true };
+    }
+
+    const myWaitingData = await myWaitingResponse.json();
+    return myWaitingData.length === 0 
+      ? result 
+      : { ...result, waitingCount: myWaitingData[0]?.remaining_waitings_count, hasMyWaiting: true };
+  } catch (error) {
+    console.error(`Error fetching my waiting for floor ${floor.id}:`, error);
+    return { ...result, error: true };
+  }
+}
+
+function updateWaitingDisplay(result) {
+  const element = document.getElementById(result.id);
+
+  if (result.error) {
+    element.textContent = "Error";
+    return;
+  }
+
+  const waitingCount = result.waitingCount;
+  let displayText;
+  if (result.hasMyWaiting) {
+    if (waitingCount === -1) {
+      displayText = "<strong>지금 입장</strong>"; // TODO: 실제 API 응답 확인 필요
+    } else if (waitingCount === 0) {
+      displayText = "<strong>다음 입장</strong>";
+    } else if (waitingCount >= 1) {
+      displayText = `대기 <strong>${waitingCount + 1}번째</strong>`;
+    } else {
+      displayText = "N/A";
+    }
+
+    element.classList.remove('floor-status');
+    element.classList.add('my-floor-status');
+  } else {
+      if (waitingCount === 0) {
+        displayText = "<strong>바로 입장</strong>";
+      } else if (waitingCount) {
+        displayText = `대기 <strong>${waitingCount}팀</strong>`;
+      } else {
+        displayText = "N/A";
+      }
+  }
+  element.innerHTML = displayText;
 }
 
 /**
