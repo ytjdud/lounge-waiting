@@ -68,6 +68,12 @@ function handleStoreStatus() {
   }
 }
 
+/**
+ * 모든 라운지의 웨이팅 정보를 불러오고 화면에 표시한다. 
+ * 
+ * @param {} value 
+ * @param {*} accessToken 
+ */
 async function fetchAllWaitingCounts(value, accessToken) {
   try {
     const promises = stores.flatMap((store) => store.floors)
@@ -86,6 +92,13 @@ async function fetchAllWaitingCounts(value, accessToken) {
   }
 }
 
+/**
+ * 전체 웨이팅 팀 수를 불러온다. (내 웨이팅 정보X)
+ * 
+ * @param {*} floor 
+ * @param {*} accessToken 
+ * @returns 
+ */
 async function fetchDefaultWaiting(floor, accessToken) {
   const result = createResult(floor.id);
 
@@ -104,6 +117,13 @@ async function fetchDefaultWaiting(floor, accessToken) {
   }
 }
 
+/**
+ * 내 웨이팅 정보를 불러온다. 입장까지 몇 번째 순서인지 알 수 있다.
+ * 
+ * @param {*} floor 
+ * @param {*} accessToken 
+ * @returns 
+ */
 async function fetchMyWaiting(floor, accessToken) {
   const result = createResult(floor.id);
   
@@ -124,6 +144,12 @@ async function fetchMyWaiting(floor, accessToken) {
   }
 }
 
+/**
+ * 불러온 웨이팅 정보를 화면에 표시한다.
+ * 
+ * @param {} result 
+ * @returns 
+ */
 function updateWaitingDisplay(result) {
   const element = document.getElementById(result.id);
 
