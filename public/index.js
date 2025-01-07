@@ -2,6 +2,36 @@ import { STORE_INFO } from './enum.js';
 
 const stores = Object.values(STORE_INFO);
 
+function generateControllerHTML() {
+  const listController = document.querySelector(".list-contollers");
+
+  const selectElement = document.createElement("select");
+  selectElement.className = "select";
+  selectElement.id = "select";
+
+  // TODO: 자동화하기
+  const options = [
+    { value: "default", text: "기본", selected: true },
+    { value: "sunny", text: "sunny"},
+    { value: "lauren", text: "lauren"},
+  ];
+
+  options.forEach((optionData) => {
+    const option = document.createElement("option");
+    option.value = optionData.value;
+    option.text = optionData.text;
+    if (optionData.selected) option.selected = true;
+    selectElement.appendChild(option);
+  });
+
+  const reloadDiv = document.createElement("div");
+  reloadDiv.className = "reload";
+  reloadDiv.id = "reload";
+
+  listController.appendChild(selectElement);
+  listController.appendChild(reloadDiv);
+}
+
 
 function generateStoreHTML(stores) {
   const listContainer = document.querySelector(".list-container");
@@ -77,7 +107,7 @@ async function addClickEventToContact(stores) {
   }
 }
 
-
+generateControllerHTML();
 generateStoreHTML(stores);
 
 document.addEventListener("DOMContentLoaded", () => {
