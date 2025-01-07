@@ -92,6 +92,29 @@ body {
   z-index: -1; /* 텍스트 뒤로 보내기 */
 }
 
+.my-floor-status {
+  flex: 1; /* 나머지 공간을 채우는 유연한 영역 */
+  text-align: center;
+  position: relative;
+  color: #aa4d4d;
+}
+
+.my-floor-status strong {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.my-floor-status::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background-color: #e5c8c8;
+  z-index: -1;
+}
+
 .contact {
   width: 4.5vw;
   height: 5.5vw;

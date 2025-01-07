@@ -92,11 +92,13 @@ async function fetchAllWaitingCounts(accessToken) {
           return {
             id: floor.id,
             waitingCount: data.waiting_info?.queued_waitings_count,
+            myWaiting: false,
           };
         } else {
           return {
             id: floor.id,
             waitingCount: myWaitingData[0]?.remaining_waitings_count ?? "N/A",
+            myWaiting: true,
           };
         }
       });
@@ -109,11 +111,27 @@ async function fetchAllWaitingCounts(accessToken) {
         element.textContent = "Error";
       } else {
         const waitingCount = result.waitingCount;
-        const displayText = waitingCount === 0
-        ? "<strong>바로입장</strong>"
-        : ( waitingCount
-          ? `대기 <strong>${waitingCount}팀</strong>`
-          : "N/A" );
+        let displayText;
+        if (result.myWaiting){
+          if (waitingCount === -1) {
+            displayText = "<strong>지금 입장</strong>"; // TODO: 실제 API 응답 확인 필요
+          } else if (waitingCount === 0) {
+            displayText = "<strong>다음 입장</strong>";
+          } else if (waitingCount >= 1) {
+            displayText = `대기 <strong>${waitingCount+1}번째</strong>`;
+          } else {
+            displayText = "N/A";
+          }
+          
+          element.classList.remove('floor-status');
+          element.classList.add('my-floor-status');
+        } else {
+          displayText = waitingCount === 0
+          ? "<strong>바로 입장</strong>"
+          : ( waitingCount
+            ? `대기 <strong>${waitingCount}팀</strong>`
+            : "N/A" );
+        }
 
         element.innerHTML = displayText;
       }
@@ -124,7 +142,7 @@ async function fetchAllWaitingCounts(accessToken) {
 }
 
 /**
- * 새로고침 버튼을 누르면 대기 인원이 새로고침된다. (완료)
+ * 새로고침 버튼을 누르면 대기 인원이 새로고침된다.
  * 
  * @param {*} reloadId 
  * @param {*} rotateAnimationClassName 
@@ -225,5 +243,5 @@ function refreshAt(hour, minute, second) {
 
 
 handleStoreStatus();
-addClickEventToReload(HTML_ID.reload, HTML_CLASS_NAME_ROTATE_ANIMATION)
+addClickEventToReload(HTML_ID.reload, HTML_CLASS_NAME_ROTATE_ANIMATION);
 refreshAt(10, 30, 1);
