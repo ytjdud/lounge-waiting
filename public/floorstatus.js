@@ -77,11 +77,11 @@ function handleStoreStatus() { // TODO: main.js 하게 된다면 main.js에 아�
 async function fetchAllWaitingCounts(value, accessToken) {
   try {
     const promises = stores.flatMap((store) => store.floors)
-      .map((floor) => {
+      .map(async (floor) => {
         if (value === 'default') {
           return fetchDefaultWaiting(floor, accessToken);
         }
-        const myWaiting = fetchMyWaiting(floor, accessToken);
+        const myWaiting = await fetchMyWaiting(floor, accessToken);
         return myWaiting.hasMyWaiting ? myWaiting : fetchDefaultWaiting(floor, accessToken);
       });
 
@@ -181,8 +181,6 @@ function updateWaitingDisplay(result) {
     } else {
       displayText = "N/A";
     }
-    element.classList.remove('my-floor-status');
-    element.classList.add('floor-status');
   }
   element.innerHTML = displayText;
 }
