@@ -181,6 +181,9 @@ function updateWaitingDisplay(result) {
     } else {
       displayText = "N/A";
     }
+
+    element.classList.remove('my-floor-status');
+    element.classList.add('floor-status');
   }
   element.innerHTML = displayText;
 }
