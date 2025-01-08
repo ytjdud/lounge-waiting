@@ -1,5 +1,7 @@
-import { STORE_INFO, ACCESS_TOKEN, 
-  HTML_ID, HTML_CLASS_NAME_ROTATE_ANIMATION } from './enum.js';
+import {
+  STORE_INFO, OPTIONS,
+  HTML_ID, HTML_CLASS_NAME_ROTATE_ANIMATION
+} from './enum.js';
 import { FloorStatusApi } from './api/FloorStatusApi.js';
 import { createResult } from './fetchResultTemplate.js';
 
@@ -29,21 +31,21 @@ async function getFloorStatusBySelectOption(selectId) {
 /**
  * 옵션 값에 따라 API 호출에 전달하는 access token 값이 다르다.
  * 
- * @param {*} value 
+ * @param {*} selectedValue 
  */
-function checkValue(value) {
-  const token = ACCESS_TOKEN[value];
-  if (token) {
-    handleInterval(intervalTime, value, token);
-  } else {
-    console.log(`${value}의 토큰에 문제 발생. token: ${token}`);
-  }
+function checkValue(selectedValue) {
+  const accessToken = OPTIONS[selectedValue]?.accesstoken;
+  accessToken
+    ? handleInterval(intervalTime, selectedValue, accessToken)
+    : console.log(`${selectedValue}의 토큰에 문제 발생. accessToken: ${accessToken}`);
 }
 
 /**
  * API를 주기적으로 호출하도록 인터벌을 설정하는 함수
  * 
  * @param {*} intervalTime 
+ * @param {*} value 
+ * @param {*} accessToken 
  */
 function handleInterval(intervalTime, value, accessToken) {
   fetchAllWaitingCounts(value, accessToken);
@@ -52,7 +54,7 @@ function handleInterval(intervalTime, value, accessToken) {
     if (!isEveryStoreOpen()) {
       clearInterval(intervalId); // 영업 종료 시 인터벌 중지
     }
-    fetchAllWaitingCounts(accessToken);
+    fetchAllWaitingCounts(value, accessToken);
   }, intervalTime);
 }
 
@@ -60,12 +62,10 @@ function handleInterval(intervalTime, value, accessToken) {
  * 영업 시간 내인 경우, API를 호출하고 true를 반환한다.
  * 영업 시간 외인 경우, API를 호출하지 않고 영업 종료 텍스트를 작성한 후 false를 반환한다.
  */
-function handleStoreStatus() {
-  if (isEveryStoreOpen()) {
-    getFloorStatusBySelectOption(HTML_ID.select);
-  } else {
-    setClosedText(stores);
-  }
+function handleStoreStatus() { // TODO: main.js 하게 된다면 main.js에 아래 내용 작성
+  isEveryStoreOpen()
+    ? getFloorStatusBySelectOption(HTML_ID.select)
+    : setClosedText(stores);
 }
 
 /**
@@ -77,13 +77,13 @@ function handleStoreStatus() {
 async function fetchAllWaitingCounts(value, accessToken) {
   try {
     const promises = stores.flatMap((store) => store.floors)
-    .map((floor) => {
-      if (value === 'default') {
-        return fetchDefaultWaiting(floor, accessToken);
-      }
-      const myWaiting = fetchMyWaiting(floor, accessToken);
-      return myWaiting.hasMyWaiting ? myWaiting : fetchDefaultWaiting(floor, accessToken);
-    });
+      .map((floor) => {
+        if (value === 'default') {
+          return fetchDefaultWaiting(floor, accessToken);
+        }
+        const myWaiting = fetchMyWaiting(floor, accessToken);
+        return myWaiting.hasMyWaiting ? myWaiting : fetchDefaultWaiting(floor, accessToken);
+      });
 
     const results = await Promise.all(promises);
     results.forEach(updateWaitingDisplay);
@@ -174,13 +174,15 @@ function updateWaitingDisplay(result) {
     element.classList.remove('floor-status');
     element.classList.add('my-floor-status');
   } else {
-      if (waitingCount === 0) {
-        displayText = "<strong>바로 입장</strong>";
-      } else if (waitingCount) {
-        displayText = `대기 <strong>${waitingCount}팀</strong>`;
-      } else {
-        displayText = "N/A";
-      }
+    if (waitingCount === 0) {
+      displayText = "<strong>바로 입장</strong>";
+    } else if (waitingCount) {
+      displayText = `대기 <strong>${waitingCount}팀</strong>`;
+    } else {
+      displayText = "N/A";
+    }
+    element.classList.remove('my-floor-status');
+    element.classList.add('floor-status');
   }
   element.innerHTML = displayText;
 }
@@ -199,7 +201,7 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName) {
 
     setTimeout(() => {
       reloadElement.classList.remove(rotateAnimationClassName);
-    }, 1000*0.5); // 0.5초
+    }, 1000 * 0.5); // 0.5초
 
     const selectedValue = document.getElementById(HTML_ID.select).value;
     checkValue(selectedValue);
@@ -220,24 +222,16 @@ function isEveryStoreOpen() {
 
   // 월 ~ 목 영업시간 : 10:30 ~ 8:00
   if (currentDay >= 1 && currentDay <= 4) {
-    if (
-      (currentHour > 10 || (currentHour === 10 && currentMinute >= 30)) 
-        && currentHour < 20
-    ) {
-      return true;
-    }
-    return false;
-  } 
-  
+    return (currentHour > 10 || (currentHour === 10 && currentMinute >= 30)) 
+            && currentHour < 20
+        ? true : false;
+  }
+
   // 금 ~ 일 영업시간 : 10:30 ~ 8:30
   else {
-    if (
-      (currentHour > 10 || (currentHour === 10 && currentMinute >= 30)) 
-        && (currentHour < 20 || (currentHour === 20 && currentMinute < 30))
-    ) {
-      return true;
-    }
-    return false;
+    return (currentHour > 10 || (currentHour === 10 && currentMinute >= 30))
+            && (currentHour < 20 || (currentHour === 20 && currentMinute < 30))
+       ? true : false;
   }
 }
 
@@ -279,13 +273,13 @@ function refreshAt(hour, minute, second) {
   const timeout = target.getTime() - now.getTime();
 
   setTimeout(() => {
-    ACCESS_TOKEN.forEach((token) => {
-      fetchAllWaitingCounts(token);
+    Object.entries(OPTIONS).forEach(([key, value]) => {
+      fetchAllWaitingCounts(key, value.accesstoken)
     });
   }, timeout);
 }
 
-
+// TODO: main.js, export function?
 handleStoreStatus();
 addClickEventToReload(HTML_ID.reload, HTML_CLASS_NAME_ROTATE_ANIMATION);
 refreshAt(10, 30, 1);

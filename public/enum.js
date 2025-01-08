@@ -1,8 +1,20 @@
-export const ACCESS_TOKEN = {
-  default : '',
-  sunny : '',
-  lauren : ''
-};
+export const OPTIONS = {
+  default : {
+    text : "기본",
+    selected : false,
+    accesstoken : ''
+  },
+  sunny : {
+    text : '엄마',
+    selected : true,
+    accesstoken : ''
+  },
+  lauren : {
+    text : '서영',
+    selected : false,
+    accesstoken : ''
+  }
+}
 
 export const HTML_ID = {
   select : 'select',

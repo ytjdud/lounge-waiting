@@ -1,4 +1,4 @@
-import { STORE_INFO } from './enum.js';
+import { STORE_INFO, OPTIONS } from './enum.js';
 
 const stores = Object.values(STORE_INFO);
 
@@ -9,18 +9,11 @@ function generateControllerHTML() {
   selectElement.className = "select";
   selectElement.id = "select";
 
-  // TODO: 자동화하기
-  const options = [
-    { value: "default", text: "기본", selected: true },
-    { value: "sunny", text: "sunny"},
-    { value: "lauren", text: "lauren"},
-  ];
-
-  options.forEach((optionData) => {
+  Object.entries(OPTIONS).forEach(([key, value]) => {
     const option = document.createElement("option");
-    option.value = optionData.value;
-    option.text = optionData.text;
-    if (optionData.selected) option.selected = true;
+    option.value = key;
+    option.text = value.text;
+    if (value.selected) option.selected = true;
     selectElement.appendChild(option);
   });
 
