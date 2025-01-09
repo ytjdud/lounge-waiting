@@ -21,7 +21,11 @@ export const HTML_ID = {
   reload : 'reload',
 };
 
-export const HTML_CLASS_NAME_ROTATE_ANIMATION = 'rotating';
+export const HTML_CLASS_NAME = {
+  rotatinganimation: 'rotating',
+  floorstatus: 'floor-status',
+  myfloorstatus: 'my-floor-status'
+}
 
 export const STORE_INFO = {
   gangnam: {

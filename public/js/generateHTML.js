@@ -1,8 +1,6 @@
-import { STORE_INFO, OPTIONS } from './enum.js';
+import { OPTIONS } from './enum.js';
 
-const stores = Object.values(STORE_INFO);
-
-function generateControllerHTML() {
+export function generateControllerHTML() {
   const listController = document.querySelector(".list-contollers");
 
   const selectElement = document.createElement("select");
@@ -25,8 +23,7 @@ function generateControllerHTML() {
   listController.appendChild(reloadDiv);
 }
 
-
-function generateStoreHTML(stores) {
+export function generateStoreHTML(stores) {
   const listContainer = document.querySelector(".list-container");
 
   for (const store of stores) {
@@ -65,45 +62,3 @@ function generateStoreHTML(stores) {
     listContainer.appendChild(storeContainer);
   }
 }
-
-/**
- * Floor Status를 누르면 실제 나우웨이팅 페이지로 이동한다.
- * 
- */
-async function addClickEventToFloorStatus(stores) {
-  for (const store of stores) {
-    store.floors.forEach((floor) => {
-      const floorStatusElement = document.getElementById(floor.id);
-      if (floorStatusElement) {
-        floorStatusElement.onclick = () => {
-          window.open(floor.url, "_blank"); // 새 탭에서 URL 열기
-        };
-      }
-    });
-  }
-}
-
-/**
- * 전화기 버튼을 누르면 해당 라운지에 전화를 할 수 있다.
- * 
- */
-async function addClickEventToContact(stores) {
-  for (const store of stores) {
-    store.floors.forEach((floor) => {
-      const contactElement = document.getElementById(`contact-${floor.id}`);
-      if(contactElement) {
-        contactElement.onclick = () => {
-          window.location.href = `tel:${floor.contact}`;
-        };
-      }
-    });
-  }
-}
-
-generateControllerHTML();
-generateStoreHTML(stores);
-
-document.addEventListener("DOMContentLoaded", () => {
-  addClickEventToFloorStatus(stores);
-  addClickEventToContact(stores);
-});

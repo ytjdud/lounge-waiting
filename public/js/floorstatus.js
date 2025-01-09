@@ -1,14 +1,21 @@
-import {
-  STORE_INFO, OPTIONS,
-  HTML_ID, HTML_CLASS_NAME_ROTATE_ANIMATION
-} from './enum.js';
-import { FloorStatusApi } from './api/FloorStatusApi.js';
+import { STORE_INFO, OPTIONS, HTML_CLASS_NAME } from './enum.js';
+import { FloorStatusApi } from '../api/FloorStatusApi.js';
 import { createResult } from './fetchResultTemplate.js';
 
 const intervalTime = 1000 * 60 * 5; // 5분
 const stores = Object.values(STORE_INFO);
 
 const floorStatusApi = new FloorStatusApi();
+
+/**
+ * 영업 시간 내인 경우, API를 호출하고 true를 반환한다.
+ * 영업 시간 외인 경우, API를 호출하지 않고 영업 종료 텍스트를 작성한 후 false를 반환한다.
+ */
+export function handleStoreStatus(selectId) {
+  isEveryStoreOpen()
+    ? getFloorStatusBySelectOption(selectId)
+    : setClosedText(stores);
+}
 
 /**
  * 선택한 옵션에 따라 API 반환 값이 달라진다.
@@ -56,16 +63,6 @@ function handleInterval(intervalTime, value, accessToken) {
     }
     fetchAllWaitingCounts(value, accessToken);
   }, intervalTime);
-}
-
-/**
- * 영업 시간 내인 경우, API를 호출하고 true를 반환한다.
- * 영업 시간 외인 경우, API를 호출하지 않고 영업 종료 텍스트를 작성한 후 false를 반환한다.
- */
-function handleStoreStatus() { // TODO: main.js 하게 된다면 main.js에 아래 내용 작성
-  isEveryStoreOpen()
-    ? getFloorStatusBySelectOption(HTML_ID.select)
-    : setClosedText(stores);
 }
 
 /**
@@ -171,8 +168,8 @@ function updateWaitingDisplay(result) {
       displayText = "N/A";
     }
 
-    element.classList.remove('floor-status');
-    element.classList.add('my-floor-status');
+    element.classList.remove(HTML_CLASS_NAME.floorstatus);
+    element.classList.add(HTML_CLASS_NAME.myfloorstatus);
   } else {
     if (waitingCount === 0) {
       displayText = "<strong>바로 입장</strong>";
@@ -182,8 +179,8 @@ function updateWaitingDisplay(result) {
       displayText = "N/A";
     }
 
-    element.classList.remove('my-floor-status');
-    element.classList.add('floor-status');
+    element.classList.remove(HTML_CLASS_NAME.myfloorstatus);
+    element.classList.add(HTML_CLASS_NAME.floorstatus);
   }
   element.innerHTML = displayText;
 }
@@ -193,8 +190,9 @@ function updateWaitingDisplay(result) {
  * 
  * @param {*} reloadId 
  * @param {*} rotateAnimationClassName 
+ * @param {*} selectId 
  */
-async function addClickEventToReload(reloadId, rotateAnimationClassName) {
+export async function addClickEventToReload(reloadId, rotateAnimationClassName, selectId) {
   const reloadElement = document.getElementById(reloadId);
 
   reloadElement.addEventListener('click', () => {
@@ -204,7 +202,7 @@ async function addClickEventToReload(reloadId, rotateAnimationClassName) {
       reloadElement.classList.remove(rotateAnimationClassName);
     }, 1000 * 0.5); // 0.5초
 
-    const selectedValue = document.getElementById(HTML_ID.select).value;
+    const selectedValue = document.getElementById(selectId).value;
     checkValue(selectedValue);
   });
 }
@@ -257,7 +255,7 @@ async function setClosedText(stores) {
  * @param {*} minute 
  * @param {*} second 
  */
-function refreshAt(hour, minute, second) {
+export function refreshAt(hour, minute, second) {
   const now = new Date();
   const target = new Date();
 
@@ -279,8 +277,3 @@ function refreshAt(hour, minute, second) {
     });
   }, timeout);
 }
-
-// TODO: main.js, export function?
-handleStoreStatus();
-addClickEventToReload(HTML_ID.reload, HTML_CLASS_NAME_ROTATE_ANIMATION);
-refreshAt(10, 30, 1);
