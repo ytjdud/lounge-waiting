@@ -13,6 +13,34 @@ body {
   width: 90vw;
 }
 
+.list-contollers {
+  display : flex;
+  align-items: center; 
+  justify-content: end;
+  margin-bottom: 3vw;
+}
+
+.select {
+  /* outline: 0; */
+  background: #ffffff;
+  font-size: 4vw;
+  text-align-last: center;
+  color: #AA8B4D;
+  border: 0.35vw solid #E5DCC8;
+  padding: 0.4vw 1.2vw;
+  border-radius: 4vw;
+  margin-right: 2vw;
+}
+
+.reload {
+  width: 6vw;
+  height: 6vw;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-image: url('icon/reload.png');
+  filter: invert(96%) sepia(9%) saturate(534%) hue-rotate(341deg) brightness(91%) contrast(98%);
+}
+
 .store-container {
   padding-bottom: 10vw;
 }
@@ -64,6 +92,29 @@ body {
   z-index: -1; /* 텍스트 뒤로 보내기 */
 }
 
+.my-floor-status {
+  flex: 1; /* 나머지 공간을 채우는 유연한 영역 */
+  text-align: center;
+  position: relative;
+  color: #aa4d4d;
+}
+
+.my-floor-status strong {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.my-floor-status::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background-color: #e5c8c8;
+  z-index: -1;
+}
+
 .contact {
   width: 4.5vw;
   height: 5.5vw;
@@ -73,30 +124,32 @@ body {
   filter: invert(6%) sepia(31%) saturate(0%) hue-rotate(12deg) brightness(99%) contrast(93%);
 }
 
-.reload {
-  width: 5.5vw;
-  height: 5.5vw;
-  float: right;
-  margin-bottom: 2vw;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-image: url('icon/reload.png');
-  filter: invert(96%) sepia(9%) saturate(534%) hue-rotate(341deg) brightness(91%) contrast(98%);
-}
-
 .rotating {
   animation: rotate-right 0.5s linear;
 	transform-origin: 50% 50%;
-}
-
-.list-container {
-  clear: both
 }
 
 /* 너비가 500px 이상일 때 반응형을 멈추고 고정 크기 적용 */
 @media (min-width: 500px) {
   .content {
     width: 450px;
+  }
+
+  .list-contollers {
+    margin-bottom: 15px;
+  }
+
+  .select {
+    border-width: 1.75px;
+    font-size: 20px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    margin-right: 10px;
+  }
+
+  .reload {
+    width: 30px;
+    height: 30px;
   }
 
   .store-container {
@@ -123,12 +176,6 @@ body {
   .contact {
     width: 22.5px;
     height: 27.5px;
-  }
-
-  .reload {
-    width: 27.5px;
-    height: 27.5px;
-    margin-bottom: 10px;
   }
 }
 
